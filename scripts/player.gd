@@ -1,28 +1,54 @@
 extends CharacterBody2D
 
-
-const SPEED = 300.0
-const JUMP_VELOCITY = -400.0
+const SPEED = 150.0
+const JUMP_FORCE = -400.0
+var current_dir = "none"
+var jumping = false
 
 # Get the gravity from the project settings to be synced with RigidBody nodes.
 var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
 
 
-func _physics_process(delta):
-	# Add the gravity.
+func _physics_process(_delta):
 	if not is_on_floor():
-		velocity.y += gravity * delta
+		velocity.y += gravity * _delta
+		jumping = true
+	if is_on_floor():
+		jumping = false
+		
+	_move_system(_delta)
 
-	# Handle jump.
-	if Input.is_action_just_pressed("ui_accept") and is_on_floor():
-		velocity.y = JUMP_VELOCITY
-
-	# Get the input direction and handle the movement/deceleration.
-	# As good practice, you should replace UI actions with custom gameplay actions.
-	var direction = Input.get_axis("ui_left", "ui_right")
-	if direction:
-		velocity.x = direction * SPEED
+func _move_system(_delta):
+	if Input.is_action_pressed("move_right"):
+		current_dir = "right"
+		play_anim(1)
+		velocity.x = SPEED
+	elif Input.is_action_pressed("move_left"):
+		current_dir = "left"
+		play_anim(1)
+		velocity.x = -SPEED
 	else:
-		velocity.x = move_toward(velocity.x, 0, SPEED)
-
+		play_anim(0)
+		velocity.x = 0
+	if Input.is_action_just_pressed("jump") and !jumping:
+		velocity.y = JUMP_FORCE
+		
 	move_and_slide()
+	
+func play_anim(movement):
+	var dir = current_dir
+	var anim = $sprites
+	
+	if dir == "right":
+		anim.flip_h = false
+		if movement == 1:
+			anim.play("move")
+		elif movement == 0:
+			anim.play("idle")
+	if dir == "left":
+		anim.flip_h = true
+		if movement == 1:
+			anim.play("move")
+		elif movement == 0:
+			anim.play("idle")
+
